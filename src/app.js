@@ -3,6 +3,8 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
+const users = {};
+
 const routes = require("./routes/index.js");
 
 const app = express();
@@ -34,8 +36,25 @@ app.use("/", routes);
 io.on("connection", (socket) => {
   console.log(`user connected : ${socket.id}`);
 
+  socket.on("register_user", (userId) => {
+    // Remove any existing socket.id from users object
+    const user = users[userId];
+    if (user) {
+      console.log("user already taken");
+    } else {
+      for (const [key, value] of Object.entries(users)) {
+        if (value === socket.id) {
+          delete users[key];
+        }
+      }
+      // Add the new user mapping
+      users[userId] = socket.id;
+      console.log("Updated users:", users);
+    }
+  });
+
   socket.on("message", (message) => {
-    console.log(message);
+    console.log(`${socket.id} : ${message}`);
   });
 
   socket.on("disconnect", () => {
