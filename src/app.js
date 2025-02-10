@@ -33,6 +33,16 @@ app.use(
 
 app.use("/", routes);
 
+app.get("/status-check/:friend", (req, res) => {
+  const friendId = req.params.friend;
+  const friendSocketId = users[friendId];
+  if (friendSocketId) {
+    res.json(true);
+  } else {
+    res.json(false);
+  }
+});
+
 io.on("connection", (socket) => {
   console.log(`user connected : ${socket.id}`);
 
@@ -54,7 +64,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", (message) => {
-    console.log(`${socket.id} : ${message}`);
+    console.log(`${socket.id} : ${message.text}`);
+    socket.to(users[message.friend]).emit("message", {
+      data: { text: message.text, sender: message.friend },
+    });
   });
 
   socket.on("disconnect", () => {
