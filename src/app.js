@@ -12,8 +12,8 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    // origin: "http://localhost:3000",
-    origin: "*",
+    origin: "http://localhost:3000",
+    // origin: "*",
     methods: ["GET", "POST"],
     // allowedHeaders: ["Content-Type", "Authorization"],
     allowedHeaders: ["*"],
@@ -64,10 +64,18 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", (message) => {
-    console.log(`${socket.id} : ${message.text}`);
-    socket.to(users[message.friend]).emit("message", {
-      data: { text: message.text, sender: message.friend },
-    });
+    console.log(`${socket.id} : ${message.text}: ${message.to}`);
+    receiver_id = users[message.to];
+    console.log({ receiver_id });
+    if (receiver_id) {
+      socket.to(users[message.to]).emit("message", {
+        data: { text: message.text, sender: message.friend },
+      });
+    } else {
+      socket.to(socket.id).emit("receiver_not_found", {
+        data: "user not found",
+      });
+    }
   });
 
   socket.on("disconnect", () => {
